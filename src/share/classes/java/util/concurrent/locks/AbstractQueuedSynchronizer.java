@@ -40,6 +40,13 @@ import java.util.concurrent.atomic.*;
 import sun.misc.Unsafe;
 
 /**
+ * AbstractQueuedSynchronizer的实现分析：
+ * http://www.infoq.com/cn/articles/jdk1.8-abstractqueuedsynchronizer
+ * http://www.infoq.com/cn/articles/java8-abstractqueuedsynchronizer
+ * 
+ */
+
+/**
  * Provides a framework for implementing blocking locks and related
  * synchronizers (semaphores, events, etc) that rely on
  * first-in-first-out (FIFO) wait queues.  This class is designed to
@@ -58,16 +65,16 @@ import sun.misc.Unsafe;
  * classes that are used to implement the synchronization properties
  * of their enclosing class.  Class
  * <tt>AbstractQueuedSynchronizer</tt> does not implement any
- * synchronization interface.  Instead it defines methods such as
- * {@link #acquireInterruptibly} that can be invoked as
- * appropriate by concrete locks and related synchronizers to
+ * synchronization interface.
+ *     Instead it defines methods such as {@link #acquireInterruptibly}
+ * that can be invoked as appropriate by concrete locks and related synchronizers to
  * implement their public methods.
  *
  * <p>This class supports either or both a default <em>exclusive</em>
- * mode and a <em>shared</em> mode. When acquired in exclusive mode,
- * attempted acquires by other threads cannot succeed. Shared mode
- * acquires by multiple threads may (but need not) succeed. This class
- * does not &quot;understand&quot; these differences except in the
+ * mode and a <em>shared</em> mode.
+ *     When acquired in exclusive mode, attempted acquires by other threads cannot succeed.
+ *     Shared mode acquires by multiple threads may (but need not) succeed.
+ * This class does not &quot;understand&quot; these differences except in the
  * mechanical sense that when a shared mode acquire succeeds, the next
  * waiting thread (if one exists) must also determine whether it can
  * acquire as well. Threads waiting in the different modes share the
@@ -78,15 +85,15 @@ import sun.misc.Unsafe;
  *
  * <p>This class defines a nested {@link ConditionObject} class that
  * can be used as a {@link Condition} implementation by subclasses
- * supporting exclusive mode for which method {@link
- * #isHeldExclusively} reports whether synchronization is exclusively
- * held with respect to the current thread, method {@link #release}
- * invoked with the current {@link #getState} value fully releases
- * this object, and {@link #acquire}, given this saved state value,
- * eventually restores this object to its previous acquired state.  No
- * <tt>AbstractQueuedSynchronizer</tt> method otherwise creates such a
- * condition, so if this constraint cannot be met, do not use it.  The
- * behavior of {@link ConditionObject} depends of course on the
+ * supporting exclusive mode for which method {@link #isHeldExclusively}
+ * reports whether synchronization is exclusively held with respect to the current thread,
+ * method {@link #release} invoked with the current {@link #getState} value fully releases
+ * this object,
+ * and {@link #acquire}, given this saved state value, eventually
+ * restores this object to its previous acquired state.
+ * No <tt>AbstractQueuedSynchronizer</tt> method otherwise creates such a
+ * condition, so if this constraint cannot be met, do not use it.
+ * The behavior of {@link ConditionObject} depends of course on the
  * semantics of its synchronizer implementation.
  *
  * <p>This class provides inspection, instrumentation, and monitoring
@@ -116,10 +123,10 @@ import sun.misc.Unsafe;
  * <li> {@link #isHeldExclusively}
  *</ul>
  *
- * Each of these methods by default throws {@link
- * UnsupportedOperationException}.  Implementations of these methods
- * must be internally thread-safe, and should in general be short and
- * not block. Defining these methods is the <em>only</em> supported
+ * Each of these methods by default throws {@link UnsupportedOperationException}.
+ * Implementations of these methods must be internally thread-safe,
+ * and should in general be short and not block.
+ * Defining these methods is the <em>only</em> supported
  * means of using this class. All other methods are declared
  * <tt>final</tt> because they cannot be independently varied.
  *
@@ -286,8 +293,7 @@ import sun.misc.Unsafe;
  * @since 1.5
  * @author Doug Lea
  */
-public abstract class AbstractQueuedSynchronizer
-    extends AbstractOwnableSynchronizer
+public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchronizer
     implements java.io.Serializable {
 
     private static final long serialVersionUID = 7373984972572414691L;
