@@ -49,48 +49,46 @@ import sun.misc.Unsafe;
 /**
  * Provides a framework for implementing blocking locks and related
  * synchronizers (semaphores, events, etc) that rely on
- * first-in-first-out (FIFO) wait queues.  This class is designed to
- * be a useful basis for most kinds of synchronizers that rely on a
- * single atomic <tt>int</tt> value to represent state. Subclasses
- * must define the protected methods that change this state, and which
- * define what that state means in terms of this object being acquired
- * or released.  Given these, the other methods in this class carry
- * out all queuing and blocking mechanics. Subclasses can maintain
- * other state fields, but only the atomically updated <tt>int</tt>
- * value manipulated using methods {@link #getState}, {@link
- * #setState} and {@link #compareAndSetState} is tracked with respect
- * to synchronization.
+ * first-in-first-out (FIFO) wait queues.
+ *     This class is designed to be a useful basis for most kinds of synchronizers
+ * that rely on a single atomic <tt>int</tt> value to represent state. Subclasses
+ * must define the protected methods that change this state, and which define what
+ * that state means in terms of this object being acquired or released.
+ * Given these, the other methods in this class carry out all queuing and blocking mechanics.
+ * Subclasses can maintain other state fields, but only the atomically updated <tt>int</tt>
+ * value manipulated using methods {@link #getState}, {@link #setState}
+ * and {@link #compareAndSetState} is tracked with respect to synchronization.
  *
  * <p>Subclasses should be defined as non-public internal helper
  * classes that are used to implement the synchronization properties
- * of their enclosing class.  Class
- * <tt>AbstractQueuedSynchronizer</tt> does not implement any
- * synchronization interface.
+ * of their enclosing class.
+ *     Class <tt>AbstractQueuedSynchronizer</tt> does not implement
+ * any synchronization interface.
  *     Instead it defines methods such as {@link #acquireInterruptibly}
- * that can be invoked as appropriate by concrete locks and related synchronizers to
- * implement their public methods.
+ * that can be invoked as appropriate by concrete locks and related synchronizers
+ * to implement their public methods.
  *
- * <p>This class supports either or both a default <em>exclusive</em>
- * mode and a <em>shared</em> mode.
+ * <p>This class supports either or both a default <em>exclusive</em> mode
+ * and a <em>shared</em> mode.
  *     When acquired in exclusive mode, attempted acquires by other threads cannot succeed.
  *     Shared mode acquires by multiple threads may (but need not) succeed.
  * This class does not &quot;understand&quot; these differences except in the
  * mechanical sense that when a shared mode acquire succeeds, the next
  * waiting thread (if one exists) must also determine whether it can
  * acquire as well. Threads waiting in the different modes share the
- * same FIFO queue. Usually, implementation subclasses support only
- * one of these modes, but both can come into play for example in a
- * {@link ReadWriteLock}. Subclasses that support only exclusive or
- * only shared modes need not define the methods supporting the unused mode.
+ * same FIFO queue.
+ *     Usually, implementation subclasses support only one of these modes,
+ * but both can come into play for example in a {@link ReadWriteLock}.
+ *     Subclasses that support only exclusive or only shared modes need not define the methods
+ * supporting the unused mode.
  *
  * <p>This class defines a nested {@link ConditionObject} class that
  * can be used as a {@link Condition} implementation by subclasses
  * supporting exclusive mode for which method {@link #isHeldExclusively}
  * reports whether synchronization is exclusively held with respect to the current thread,
  * method {@link #release} invoked with the current {@link #getState} value fully releases
- * this object,
- * and {@link #acquire}, given this saved state value, eventually
- * restores this object to its previous acquired state.
+ * this object, and {@link #acquire}, given this saved state value,
+ * eventually restores this object to its previous acquired state.
  * No <tt>AbstractQueuedSynchronizer</tt> method otherwise creates such a
  * condition, so if this constraint cannot be met, do not use it.
  * The behavior of {@link ConditionObject} depends of course on the
@@ -392,7 +390,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         /** waitStatus value to indicate thread has cancelled */
         static final int CANCELLED =  1;
         /** waitStatus value to indicate successor's thread needs unparking */
-        static final int SIGNAL    = -1;
+        static final int SIGNAL    = -1; // 等待被触发
         /** waitStatus value to indicate thread is waiting on condition */
         static final int CONDITION = -2;
         /**
@@ -797,6 +795,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      * @return {@code true} if thread should block
      */
     private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
+        // check当前节点的前一个节点，只有其为SIGNAL时，当前节点才能被挂起。
         int ws = pred.waitStatus;
         if (ws == Node.SIGNAL)
             /*
@@ -864,14 +863,18 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             boolean interrupted = false;
             for (;;) {
                 final Node p = node.predecessor();
-                if (p == head && tryAcquire(arg)) {
-                    setHead(node);
+                if (p == head && tryAcquire(arg)) { // 当tryAcquire成功，表明head已经运行完释放锁了。
+                    setHead(node); // 移除头节点
                     p.next = null; // help GC
                     failed = false;
                     return interrupted;
                 }
+                // 否则，检查“当前节点的前一个节点”的状态，看当前获取锁失败的线程是否需要挂起。
+                // (只有“当前节点的前一个节点”状态为SIGNAL时，当前节点才能被挂起。
+                //  非SIGNAL状态，需要其他处理，然后再loop检测其是否到达FIFO队列的head位置。)
+                // 每次被CPU唤醒后，若当前线程不是处在头节点的位置，仍被挂起。
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                    parkAndCheckInterrupt()) // 如果需要，借助JUC包下的LockSopport类的静态方法Park挂起当前线程，直到被唤醒。
                     interrupted = true;
             }
         } finally {
@@ -2287,16 +2290,16 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
 
     static {
         try {
-            stateOffset = unsafe.objectFieldOffset
-                (AbstractQueuedSynchronizer.class.getDeclaredField("state"));
-            headOffset = unsafe.objectFieldOffset
-                (AbstractQueuedSynchronizer.class.getDeclaredField("head"));
-            tailOffset = unsafe.objectFieldOffset
-                (AbstractQueuedSynchronizer.class.getDeclaredField("tail"));
-            waitStatusOffset = unsafe.objectFieldOffset
-                (Node.class.getDeclaredField("waitStatus"));
-            nextOffset = unsafe.objectFieldOffset
-                (Node.class.getDeclaredField("next"));
+            stateOffset = unsafe.objectFieldOffset(
+                    AbstractQueuedSynchronizer.class.getDeclaredField("state"));
+            headOffset = unsafe.objectFieldOffset(
+                    AbstractQueuedSynchronizer.class.getDeclaredField("head"));
+            tailOffset = unsafe.objectFieldOffset(
+                    AbstractQueuedSynchronizer.class.getDeclaredField("tail"));
+            waitStatusOffset = unsafe.objectFieldOffset(
+                    Node.class.getDeclaredField("waitStatus"));
+            nextOffset = unsafe.objectFieldOffset(
+                    Node.class.getDeclaredField("next"));
 
         } catch (Exception ex) { throw new Error(ex); }
     }
