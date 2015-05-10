@@ -53,11 +53,8 @@ package java.util.concurrent;
  * could write this as:
  *
  * <pre> {@code
- * void solve(Executor e,
- *            Collection<Callable<Result>> solvers)
- *     throws InterruptedException, ExecutionException {
- *     CompletionService<Result> ecs
- *         = new ExecutorCompletionService<Result>(e);
+ * void solve(Executor e, Collection<Callable<Result>> solvers) throws InterruptedException, ExecutionException {
+ *     CompletionService<Result> ecs = new ExecutorCompletionService<Result>(e);
  *     for (Callable<Result> s : solvers)
  *         ecs.submit(s);
  *     int n = solvers.size();
@@ -73,14 +70,10 @@ package java.util.concurrent;
  * and cancelling all other tasks when the first one is ready:
  *
  * <pre> {@code
- * void solve(Executor e,
- *            Collection<Callable<Result>> solvers)
- *     throws InterruptedException {
- *     CompletionService<Result> ecs
- *         = new ExecutorCompletionService<Result>(e);
+ * void solve(Executor e, Collection<Callable<Result>> solvers) throws InterruptedException {
+ *     CompletionService<Result> ecs = new ExecutorCompletionService<Result>(e);
  *     int n = solvers.size();
- *     List<Future<Result>> futures
- *         = new ArrayList<Future<Result>>(n);
+ *     List<Future<Result>> futures = new ArrayList<Future<Result>>(n);
  *     Result result = null;
  *     try {
  *         for (Callable<Result> s : solvers)

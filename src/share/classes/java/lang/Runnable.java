@@ -52,8 +52,7 @@ package java.lang;
  * @see     java.util.concurrent.Callable
  * @since   JDK1.0
  */
-public
-interface Runnable {
+public interface Runnable {
     /**
      * When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
